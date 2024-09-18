@@ -12,11 +12,11 @@ const PORT = process.env.PORT || 3001;
 // TODO: Serve static files of entire client dist folder - DONE
 app.use(express.static('client/dist'));
 
-// TODO: Implement middleware for parsing JSON and urlencoded form data
+// TODO: Implement middleware for parsing JSON and urlencoded form data - DONE
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true })); 
 
-// TODO: Implement middleware to connect the routes
+// TODO: Implement middleware to connect the routes - DONE
 app.use('api', routes);
 
 // Start the server on the port
