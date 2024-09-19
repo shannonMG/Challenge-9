@@ -39,7 +39,7 @@ class WeatherService {
     
   };
     // TODO: Create fetchLocationData method - DONE
-    private async fetchLocationData(cityName: string): Promise<Coordinate> {
+    private async fetchLocationData(_cityName: string): Promise<Coordinate> {
       try {
         const geocodeQuery = this.buildGeocodeQuery();
         const response = await fetch(geocodeQuery);
