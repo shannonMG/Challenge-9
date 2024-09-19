@@ -32,7 +32,7 @@ class HistoryService {
    }
   // TODO: Define a write method that writes the updated cities array to the searchHistory.json file
   private async write(cities: City[]): Promise<void> {
-    const filePath = 'searchHistory.json';
+    const filePath = this.filePath;
     try{
       const jsonData = JSON.stringify(cities, null, 2);
       await fs.writeFile(filePath, jsonData, 'utf8');
