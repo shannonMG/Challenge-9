@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+
 dotenv.config();
 // TODO: Define a class for the Weather object - DONE
 class Weather {

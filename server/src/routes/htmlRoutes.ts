@@ -10,7 +10,10 @@ const router = Router(); //creates a new Router() function, can be used to defin
 
 // TODO: Define route to serve index.html
 router.get('/', (__, res) => { //defines router method get for '/'  /req & res are objects req contains incoming request, response sends respone back to client
-    res.sendFile(path.join(__dirname, '../../../../../client/dist/index.html')); //this line sends the html file that is joined into a single file path with the join()
+    res.sendFile(path.join(__dirname, '../../../../../client/index.html')); //this line sends the html file that is joined into a single file path with the join()
   });  
 
+
+
+  
 export default router; // this exports the router instance so it can be used elsewhere. 

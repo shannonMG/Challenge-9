@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// console.log('API KEY:', process.env.API_KEY);
+
+
 // TODO: Define an interface for the Coordinates object - DONE
 interface Coordinate {
   lat: number;
@@ -13,13 +16,21 @@ interface Coordinates {
 }
 // TODO: Define a class for the Weather object - DONE
 class Weather {
-  temp: number;
-  wind: number;
+  city: string;
+  date: string;
+  icon: string;
+  iconDescription: string;
+  tempF: number;
+  windSpeed: number;
   humidity: number;
 
-  constructor(temp: number, wind: number, humidity: number) {
-    this.temp = temp;
-    this.wind = wind;
+  constructor(city:string, date:string, icon: string, iconDescription: string, tempF: number, windSpeed: number, humidity: number) {
+    this.city = city;
+    this.date = date;
+    this.icon = icon;
+    this.iconDescription = iconDescription;
+    this.tempF = tempF;
+    this.windSpeed = windSpeed;
     this.humidity = humidity;
   }
 
@@ -96,48 +107,60 @@ class WeatherService {
 
     // TODO: Create fetchWeatherData method - DONE
     private async fetchWeatherData(coordinates: Coordinates): Promise<any> {
-      try {
-        const weatherQueryUrl = this.buildWeatherQuery(coordinates);
-        const response = await fetch(weatherQueryUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch weather data: ${response.statusText}`);
-        }
-
-        const weatherData = await response.json();
-        const temp = weatherData.main.temp;
-        const wind = weatherData.main.wind;
-        const humidity = weatherData.main.humidity
-
-        return new Weather(temp, wind, humidity);
-    } catch (error) {
-      console.error ('Error fetching weather data: 1', error);
-      throw error;
-    }
-   }
+        try {
+          const weatherQueryUrl = this.buildWeatherQuery(coordinates);
+          const response = await fetch(weatherQueryUrl);
+          
+          if (!response.ok) {
+              throw new Error(`Failed to fetch weather data: ${response.statusText}`);
+          }
+  
+          const rawWeatherData = await response.json(); // Get raw data
+          console.log('Raw Weather Data:', rawWeatherData);
+          return this.parseCurrentWeather(rawWeatherData); // Use parseCurrentWeather here
+      } catch (error) {
+          console.error('Error fetching weather data:', error);
+          throw error;
+      }
+  }
   
   // TODO: Build parseCurrentWeather method - DONE
-   private parseCurrentWeather(rawWeatherData: any): Weather {
-    try { 
-    const temp = rawWeatherData.main.temp;        
-    const wind = rawWeatherData.wind.speed;       
-    const humidity = rawWeatherData.main.humidity; 
-    return new Weather(temp, wind, humidity);
+  private parseCurrentWeather(rawWeatherData: any): Weather {
+    try {
+      if (!rawWeatherData.main || typeof rawWeatherData.main.temp === 'undefined') {
+        throw new Error('Missing temperature data');
+      }
+      const city = rawWeatherData.name
+      const date = new Date(rawWeatherData.dt *1000).toLocaleDateString();
+      const icon = rawWeatherData.weather[0].icon
+      const iconDescription = rawWeatherData.weather[0].description
+      const tempK = rawWeatherData.main.temp;
+      const rawtempF = (tempK -273) * (9/5)+ 32;
+      const tempF = Math.round(rawtempF * 10) / 10;
+      const windSpeed = rawWeatherData.wind.speed;
+      const humidity = rawWeatherData.main.humidity;
 
-  } catch (error) {
-    console.error('Error parsing weather data: ', error);
-    throw new Error('Failed to parse current weather data');
-
+      return new Weather(city, date, icon, iconDescription, tempF, windSpeed, humidity);
+    } catch (error) {
+      console.error('Error parsing weather data:', error);
+      throw new Error('Failed to parse current weather data');
     }
-   }
+  }
   // TODO: Complete buildForecastArray method - DONE
   private buildForecastArray(weatherData: any[]) {
     const forecastArray: Weather [] = [];
     
     weatherData.forEach((data) => {
-    const temp = data.main.temp;        
-    const wind = data.wind.speed;       
+    const city = data.name
+    const date = new Date(data.dt *1000).toLocaleDateString();
+    const icon = data.weather[0].icon
+    const iconDescription = data.weather[0].description
+    const tempK = data.main.temp;    
+    const rawtempF = (tempK -273) * (9/5)+ 32;
+    const tempF = Math.round(rawtempF * 10) / 10;    
+    const windSpeed = data.wind.speed;       
     const humidity = data.main.humidity; 
-    const forecastWeather = new Weather(temp, wind, humidity);
+    const forecastWeather = new Weather(city,date, icon, iconDescription,tempF, windSpeed, humidity);
     forecastArray.push(forecastWeather);
   });
     return forecastArray;
@@ -155,10 +178,7 @@ class WeatherService {
       console.log(`Fetching data for city: ${this.cityName}`);
      
       const coordinates = await this.fetchAndDestructureLocationData(this.cityName);
-
-      const rawWeatherData = await this.fetchWeatherData(coordinates);
-      
-      const parsedCurrentWeather = this.parseCurrentWeather(rawWeatherData);
+     const parsedCurrentWeather = await this.fetchWeatherData(coordinates);
       
       const forecastQueryUrl = `${this.baseURL}/data/2.5/forecast?lat=${coordinates.latitude}&lon=${coordinates.longitude}&appid=${this.apiKey}`;
       const forecastResponse = await fetch(forecastQueryUrl);
