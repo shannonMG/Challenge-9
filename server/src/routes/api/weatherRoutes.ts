@@ -1,76 +1,52 @@
+import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs/promises'
 
-// TODO: Define a City class with name and id properties - DONE
-class City {
-  name: string;
-  id: string;
+import HistoryService from '../../service/historyService.js';
+import WeatherService from '../../service/weatherService.js';
 
-  constructor (name: string, id: string) {
-    this.name = name;
-    this.id = id;
+const router = Router();
+
+// TODO: POST Request with city name to retrieve weather data
+router.post('/', async (req, res): Promise<void> => { 
+  try {
+    const { cityName: city } = req.body
+    
+    const weatherData = await WeatherService.getWeatherForCity(city);
+
+    await HistoryService.addCity({ name: city, id: uuidv4() });
+    res.status(200).json( weatherData );
+
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+    res.status(500).json({ error: 'Failed to retrieve weather data' });
   }
-}
+});
 
-// TODO: Complete the HistoryService class
-class HistoryService {
-  private filePath: string;
 
-  constructor(filePath: string){
-    this.filePath = filePath;
+// TODO: GET search history
+router.get('/history', async (__, res) => {
+  try {
+    const searchHistory = await HistoryService.getCities();
+
+    res.status(200).json(searchHistory);
+  } catch (error) {
+    console.error('Error retrieving search history:', error);
+    res.status(500).json({ error: 'Failed to retrieve search history' });
   }
+});
 
-  // TODO: Define a read method that reads from the searchHistory.json file
-  private async read(): Promise<City[]> {
-    try {
-      const data = await fs.readFile(this.filePath, 'utf-8');
-      const cities: City[] = JSON.parse(data);
-      return cities;
-    } catch (error) {
-      console.error('Error reading search history:', error);
-      return [];
-    }
+// * BONUS TODO: DELETE city from search history
+router.delete('/history/:id', async (req, res) => {
+  const { id } = req.params;
+  console.log(`DELETE request received for city with ID: ${id}`);
+  try {
+    await HistoryService.removeCity(id);
+    res.status(200).json({ message: `City with ID ${id} has been removed from history.` });
+  } catch (error) {
+    console.error('Error removing city:', error);
+    res.status(500).json({ message: 'Error removing city from history.' });
   }
+});
 
-  // TODO: Define a write method that writes the updated cities array to the searchHistory.json file
-  private async write(cities: City[]): Promise<void> {
-    const filePath = this.filePath;
-    try {
-      const jsonData = JSON.stringify(cities, null, 2);
-      await fs.writeFile(filePath, jsonData, 'utf8');
-      console.log('File has been written successfully');
-    } catch (error) {
-      console.error('Error writing file: ', error);
-    }
-  }
+export default router;
 
-  // TODO: Define a getCities method that reads the cities from the searchHistory.json file and returns them as an array of City objects
-  async getCities(): Promise<City[]> {
-    try {
-      const cities = await this.read();
-      return cities;
-    } catch (error) {
-      console.error('Error getting cities:', error);
-      return [];
-    }
-  }
-
-  // TODO: Define an addCity method that adds a city to the searchHistory.json file
-  async addCity(city: City): Promise<void> {
-    try {
-      const cities = await this.read();
-      const newCity = new City(city.name, uuidv4());
-      cities.push(newCity);
-      await this.write(cities);
-      console.log(`City "${city.name}" has been added to the search history.`);
-    } catch (error) {
-      console.error('Error adding city:', error);
-    }
-  }
-
-  // * BONUS TODO: Define a removeCity method that removes a city from the searchHistory.json file
-  // async removeCity(id: string) {}
-}
-
-
-export default new HistoryService('searchHistory.json');
