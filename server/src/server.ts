@@ -1,6 +1,4 @@
 import dotenv from 'dotenv'; // - this allows the environment to be loaded from the .env for the API key
-import path from 'path'; // imports path module
-import { fileURLToPath } from 'url'; 
 import express from 'express'; // - imports express to simplify routes, requests and middleware
 dotenv.config(); // -this is what is actually reading the .env file
 
